@@ -1,0 +1,268 @@
+basePath: /
+definitions:
+  dto.AuthTokensResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  dto.AuthURLResponse:
+    properties:
+      auth_url:
+        type: string
+    type: object
+  dto.ErrorResponse:
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  dto.GoogleMobileLoginRequest:
+    properties:
+      id_token:
+        type: string
+    required:
+    - id_token
+    type: object
+  dto.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  dto.RegisterRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  dto.UserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API untuk autentikasi (register, login, refresh token, Google OAuth)
+  title: Auth API
+  version: "1.0"
+paths:
+  /auth/google/callback:
+    get:
+      description: Callback endpoint yang dipanggil oleh Google setelah user login
+      parameters:
+      - description: Kode authorization dari Google
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: State untuk CSRF protection
+        in: query
+        name: state
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AuthTokensResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Google OAuth callback
+      tags:
+      - Auth
+  /auth/google/login:
+    get:
+      description: Mengembalikan URL untuk redirect user ke Google OAuth
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AuthURLResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get Google OAuth URL
+      tags:
+      - Auth
+  /auth/google/mobile/login:
+    post:
+      consumes:
+      - application/json
+      description: Menerima id_token dari Google (hasil dari SDK Google di mobile),
+        memverifikasi ke Google, membuat/mencari user di DB, lalu mengembalikan JWT
+        access & refresh token.
+      parameters:
+      - description: Body berisi id_token dari Google
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.GoogleMobileLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Berhasil login dengan Google (mobile)
+          schema:
+            $ref: '#/definitions/dto.AuthTokensResponse'
+        "400":
+          description: Body request tidak valid
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: id_token Google tidak valid atau tidak bisa diverifikasi
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Login dengan Google untuk aplikasi mobile (native)
+      tags:
+      - Auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login dengan email dan password
+      parameters:
+      - description: Login Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AuthTokensResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Login user
+      tags:
+      - Auth
+  /auth/me:
+    get:
+      description: Mengambil informasi user berdasarkan access token yang dikirim
+        di header
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get data user yang sedang login
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Mengambil access token baru menggunakan refresh token
+      parameters:
+      - description: Refresh Token Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AuthTokensResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Refresh access token
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Mendaftarkan user baru menggunakan email & password
+      parameters:
+      - description: Register Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.AuthTokensResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Register user baru
+      tags:
+      - Auth
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
