@@ -4,8 +4,10 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"net/http"
+	"time"
 
 	"go-zakat/internal/delivery/http/dto"
+	"go-zakat/internal/infrastructure/oauth"
 	"go-zakat/internal/usecase"
 	"go-zakat/pkg/response"
 
@@ -13,11 +15,15 @@ import (
 )
 
 type AuthHandler struct {
-	authUC *usecase.AuthUseCase
+	authUC     *usecase.AuthUseCase
+	stateStore *oauth.StateStore
 }
 
-func NewAuthHandler(authUC *usecase.AuthUseCase) *AuthHandler {
-	return &AuthHandler{authUC: authUC}
+func NewAuthHandler(authUC *usecase.AuthUseCase, stateStore *oauth.StateStore) *AuthHandler {
+	return &AuthHandler{
+		authUC:     authUC,
+		stateStore: stateStore,
+	}
 }
 
 // Register godoc
@@ -29,7 +35,7 @@ func NewAuthHandler(authUC *usecase.AuthUseCase) *AuthHandler {
 // @Param request body dto.RegisterRequest true "Register Request Body"
 // @Success 201 {object} dto.AuthResponseWrapper
 // @Failure 400 {object} dto.ErrorResponseWrapper
-// @Router /auth/register [post]
+// @Router /api/v1/auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -68,7 +74,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 // @Param request body dto.LoginRequest true "Login Body"
 // @Success 200 {object} dto.AuthResponseWrapper
 // @Failure 401 {object} dto.ErrorResponseWrapper
-// @Router /auth/login [post]
+// @Router /api/v1/auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -105,7 +111,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 // @Produce json
 // @Success 200 {object} dto.UserResponseWrapper
 // @Failure 401 {object} dto.ErrorResponseWrapper
-// @Router /auth/me [get]
+// @Router /api/v1/auth/me [get]
 func (h *AuthHandler) Me(c *gin.Context) {
 	userID, ok := c.Get("user_id")
 	if !ok {
@@ -139,7 +145,7 @@ func (h *AuthHandler) Me(c *gin.Context) {
 // @Success 200 {object} dto.AuthTokensResponseWrapper
 // @Failure 400 {object} dto.ErrorResponseWrapper
 // @Failure 401 {object} dto.ErrorResponseWrapper
-// @Router /auth/refresh [post]
+// @Router /api/v1/auth/refresh [post]
 func (h *AuthHandler) Refresh(c *gin.Context) {
 	var req dto.RefreshTokenRequest
 
@@ -167,7 +173,7 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 // @Produce json
 // @Success 200 {object} dto.AuthURLResponseWrapper
 // @Failure 500 {object} dto.ErrorResponseWrapper
-// @Router /auth/google/login [get]
+// @Router /api/v1/auth/google/login [get]
 func (h *AuthHandler) GoogleLogin(c *gin.Context) {
 	// 1. Generate state random
 	state, err := generateState()
@@ -176,9 +182,8 @@ func (h *AuthHandler) GoogleLogin(c *gin.Context) {
 		return
 	}
 
-	// 2. Simpan state di cookie (sederhana, untuk demo)
-	// Di production sebaiknya pakai Redis/session store
-	c.SetCookie("oauth_state", state, 300, "/", "", false, true) // 5 menit
+	// 2. Simpan state di in-memory store dengan TTL 5 menit
+	h.stateStore.Set(state, 5*time.Minute)
 
 	// 3. Minta URL ke UseCase
 	authURL, err := h.authUC.GoogleLogin(state)
@@ -207,7 +212,7 @@ func (h *AuthHandler) GoogleLogin(c *gin.Context) {
 // @Failure 400 {object} dto.ErrorResponseWrapper
 // @Failure 401 {object} dto.ErrorResponseWrapper
 // @Failure 500 {object} dto.ErrorResponseWrapper
-// @Router /auth/google/callback [get]
+// @Router /api/v1/auth/google/callback [get]
 func (h *AuthHandler) GoogleCallback(c *gin.Context) {
 	// 1. Ambil code & state dari query
 	code := c.Query("code")
@@ -218,15 +223,14 @@ func (h *AuthHandler) GoogleCallback(c *gin.Context) {
 		return
 	}
 
-	// 2. Ambil expectedState dari cookie
-	expectedState, err := c.Cookie("oauth_state")
-	if err != nil {
-		response.Unauthorized(c, "state cookie tidak ditemukan", nil)
+	// 2. Validate state dari in-memory store
+	if !h.stateStore.Validate(state) {
+		response.Unauthorized(c, "state tidak valid atau sudah expired", nil)
 		return
 	}
 
-	// 3. Panggil UseCase
-	tokens, user, err := h.authUC.GoogleCallback(state, expectedState, code)
+	// 3. Panggil UseCase (state sudah divalidasi, jadi pass state yang sama)
+	tokens, user, err := h.authUC.GoogleCallback(state, state, code)
 	if err != nil {
 		response.Unauthorized(c, err.Error(), nil)
 		return
@@ -255,7 +259,7 @@ func (h *AuthHandler) GoogleCallback(c *gin.Context) {
 // @Success 200 {object} dto.AuthResponseWrapper "Berhasil login dengan Google (mobile)"
 // @Failure 400 {object} dto.ErrorResponseWrapper "Body request tidak valid"
 // @Failure 401 {object} dto.ErrorResponseWrapper "id_token Google tidak valid atau tidak bisa diverifikasi"
-// @Router /auth/google/mobile/login [post]
+// @Router /api/v1/auth/google/mobile/login [post]
 func (h *AuthHandler) GoogleMobileLogin(c *gin.Context) {
 	var req dto.GoogleMobileLoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

@@ -66,7 +66,6 @@ func (uc *AuthUseCase) Register(input RegisterInput) (*AuthTokens, *entity.User,
 		// kalau tidak error artinya user ada
 		return nil, nil, errors.New("email sudah terdaftar")
 	}
-	// NOTE: di implementasi nyata kamu bedakan error "not found" vs error lain
 
 	// 3. Hash password
 	hashed, err := bcrypt.GenerateFromPassword([]byte(input.Password), 10)

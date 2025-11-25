@@ -54,6 +54,21 @@ definitions:
         example: true
         type: boolean
     type: object
+  dto.CreateMuzakkiRequest:
+    properties:
+      address:
+        type: string
+      name:
+        type: string
+      notes:
+        type: string
+      phoneNumber:
+        type: string
+    required:
+    - address
+    - name
+    - phoneNumber
+    type: object
   dto.ErrorResponseWrapper:
     properties:
       errors: {}
@@ -81,6 +96,45 @@ definitions:
     - email
     - password
     type: object
+  dto.MuzakkiListResponseWrapper:
+    properties:
+      data:
+        description: Contains pagination data
+      message:
+        example: Success message
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  dto.MuzakkiResponse:
+    properties:
+      address:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      notes:
+        type: string
+      phoneNumber:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  dto.MuzakkiResponseWrapper:
+    properties:
+      data:
+        $ref: '#/definitions/dto.MuzakkiResponse'
+      message:
+        example: Success message
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
   dto.RefreshTokenRequest:
     properties:
       refresh_token:
@@ -101,6 +155,30 @@ definitions:
     - email
     - name
     - password
+    type: object
+  dto.ResponseSuccess:
+    properties:
+      message:
+        example: Success message
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  dto.UpdateMuzakkiRequest:
+    properties:
+      address:
+        type: string
+      name:
+        type: string
+      notes:
+        type: string
+      phoneNumber:
+        type: string
+    required:
+    - address
+    - name
+    - phoneNumber
     type: object
   dto.UserResponse:
     properties:
@@ -131,7 +209,7 @@ info:
   title: Auth API
   version: "1.0"
 paths:
-  /auth/google/callback:
+  /api/v1/auth/google/callback:
     get:
       description: Callback endpoint yang dipanggil oleh Google setelah user login
       parameters:
@@ -167,7 +245,7 @@ paths:
       summary: Google OAuth callback
       tags:
       - Auth
-  /auth/google/login:
+  /api/v1/auth/google/login:
     get:
       description: Mengembalikan URL untuk redirect user ke Google OAuth
       produces:
@@ -184,7 +262,7 @@ paths:
       summary: Get Google OAuth URL
       tags:
       - Auth
-  /auth/google/mobile/login:
+  /api/v1/auth/google/mobile/login:
     post:
       consumes:
       - application/json
@@ -216,7 +294,7 @@ paths:
       summary: Login dengan Google untuk aplikasi mobile (native)
       tags:
       - Auth
-  /auth/login:
+  /api/v1/auth/login:
     post:
       consumes:
       - application/json
@@ -242,7 +320,7 @@ paths:
       summary: Login user
       tags:
       - Auth
-  /auth/me:
+  /api/v1/auth/me:
     get:
       description: Mengambil informasi user berdasarkan access token yang dikirim
         di header
@@ -262,7 +340,7 @@ paths:
       summary: Get data user yang sedang login
       tags:
       - Auth
-  /auth/refresh:
+  /api/v1/auth/refresh:
     post:
       consumes:
       - application/json
@@ -292,7 +370,7 @@ paths:
       summary: Refresh access token
       tags:
       - Auth
-  /auth/register:
+  /api/v1/auth/register:
     post:
       consumes:
       - application/json
@@ -318,6 +396,168 @@ paths:
       summary: Register user baru
       tags:
       - Auth
+  /api/v1/muzakki:
+    get:
+      description: Get list of muzakki with pagination and search
+      parameters:
+      - description: Search by name or phone number
+        in: query
+        name: q
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.MuzakkiListResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Get all muzakki
+      tags:
+      - Muzakki
+    post:
+      consumes:
+      - application/json
+      description: Create a new muzakki record
+      parameters:
+      - description: Create Muzakki Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateMuzakkiRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.MuzakkiResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Create new muzakki
+      tags:
+      - Muzakki
+  /api/v1/muzakki/{id}:
+    delete:
+      description: Delete a muzakki record
+      parameters:
+      - description: Muzakki ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ResponseSuccess'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Delete muzakki
+      tags:
+      - Muzakki
+    get:
+      description: Get a single muzakki record by ID
+      parameters:
+      - description: Muzakki ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.MuzakkiResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Get muzakki by ID
+      tags:
+      - Muzakki
+    put:
+      consumes:
+      - application/json
+      description: Update an existing muzakki record
+      parameters:
+      - description: Muzakki ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update Muzakki Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateMuzakkiRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.MuzakkiResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Update muzakki
+      tags:
+      - Muzakki
 securityDefinitions:
   BearerAuth:
     in: header

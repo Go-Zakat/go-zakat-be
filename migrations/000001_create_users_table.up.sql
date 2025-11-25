@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255),                         -- password hash (boleh NULL untuk user Google only)
     google_id VARCHAR(255) UNIQUE,                 -- untuk login via Google
     name VARCHAR(255) NOT NULL,                    -- nama user
+    role VARCHAR(50) NOT NULL DEFAULT 'viewer',    -- role user
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), -- kapan dibuat
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()  -- kapan diupdate
 );

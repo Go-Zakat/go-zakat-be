@@ -76,10 +76,20 @@ func main() {
 	}
 	googleSvc := oauth.NewGoogleOAuthService(googleCfg)
 
+	// State store for OAuth
+	stateStore := oauth.NewStateStore()
+
+	// Auth dependencies
 	userRepo := postgres.NewUserRepository(dbPool, logr)
 	authUC := usecase.NewAuthUseCase(userRepo, tokenSvc, googleSvc, val)
+	authHandler := handler.NewAuthHandler(authUC, stateStore)
 
-	authHandler := handler.NewAuthHandler(authUC)
+	// Muzakki dependencies
+	muzakkiRepo := postgres.NewMuzakkiRepository(dbPool, logr)
+	muzakkiUC := usecase.NewMuzakkiUseCase(muzakkiRepo, val)
+	muzakkiHandler := handler.NewMuzakkiHandler(muzakkiUC)
+
+	// Middleware
 	authMiddleware := middleware.NewAuthMiddleware(tokenSvc)
 
 	router := gin.Default()
@@ -102,17 +112,33 @@ func main() {
 		c.Next()
 	})
 
-	api := router.Group("/auth")
+	// API v1 routes
+	v1 := router.Group("/api/v1")
 	{
-		api.POST("/register", authHandler.Register)
-		api.POST("/login", authHandler.Login)
-		api.POST("/refresh", authHandler.Refresh)
+		// Auth routes (public)
+		auth := v1.Group("/auth")
+		{
+			auth.POST("/register", authHandler.Register)
+			auth.POST("/login", authHandler.Login)
+			auth.POST("/refresh", authHandler.Refresh)
 
-		api.GET("/me", authMiddleware.RequireAuth(), authHandler.Me)
+			auth.GET("/me", authMiddleware.RequireAuth(), authHandler.Me)
 
-		api.GET("/google/login", authHandler.GoogleLogin)
-		api.GET("/google/callback", authHandler.GoogleCallback)
-		api.POST("/google/mobile/login", authHandler.GoogleMobileLogin)
+			auth.GET("/google/login", authHandler.GoogleLogin)
+			auth.GET("/google/callback", authHandler.GoogleCallback)
+			auth.POST("/google/mobile/login", authHandler.GoogleMobileLogin)
+		}
+
+		// Muzakki routes (protected)
+		muzakki := v1.Group("/muzakki")
+		muzakki.Use(authMiddleware.RequireAuth())
+		{
+			muzakki.GET("", muzakkiHandler.FindAll)
+			muzakki.GET("/:id", muzakkiHandler.FindByID)
+			muzakki.POST("", muzakkiHandler.Create)
+			muzakki.PUT("/:id", muzakkiHandler.Update)
+			muzakki.DELETE("/:id", muzakkiHandler.Delete)
+		}
 	}
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
