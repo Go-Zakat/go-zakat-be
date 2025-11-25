@@ -2,6 +2,13 @@ package entity
 
 import "time"
 
+// Mustahiq status constants
+const (
+	MustahiqStatusActive   = "active"
+	MustahiqStatusInactive = "inactive"
+	MustahiqStatusPending  = "pending"
+)
+
 type Mustahiq struct {
 	ID          string    `json:"id"`
 	Name        string    `json:"name"`

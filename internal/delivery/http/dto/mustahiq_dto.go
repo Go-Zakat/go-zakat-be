@@ -7,7 +7,7 @@ type CreateMustahiqRequest struct {
 	PhoneNumber string `json:"phoneNumber" binding:"required"`
 	Address     string `json:"address" binding:"required"`
 	AsnafID     string `json:"asnafID" binding:"required"`
-	Status      string `json:"status" binding:"required,oneof=active inactive pending"`
+	Status      string `json:"status" binding:"omitempty,oneof=active inactive pending"`
 	Description string `json:"description"`
 }
 

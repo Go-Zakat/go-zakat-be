@@ -24,7 +24,7 @@ type CreateMustahiqInput struct {
 	PhoneNumber string `validate:"required"`
 	Address     string `validate:"required"`
 	AsnafID     string `validate:"required"`
-	Status      string `validate:"required,oneof=active inactive pending"`
+	Status      string `validate:"omitempty,oneof=active inactive pending"`
 	Description string
 }
 
@@ -43,12 +43,18 @@ func (uc *MustahiqUseCase) Create(input CreateMustahiqInput) (*entity.Mustahiq, 
 		return nil, err
 	}
 
+	// Set default status to pending if not provided
+	status := input.Status
+	if status == "" {
+		status = entity.MustahiqStatusPending
+	}
+
 	mustahiq := &entity.Mustahiq{
 		Name:        input.Name,
 		PhoneNumber: input.PhoneNumber,
 		Address:     input.Address,
 		AsnafID:     input.AsnafID,
-		Status:      input.Status,
+		Status:      status,
 		Description: input.Description,
 	}
 
