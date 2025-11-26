@@ -55,6 +55,16 @@ type MustahiqListResponseWrapper struct {
 	Data interface{} `json:"data"` // Contains pagination data
 }
 
+type ProgramResponseWrapper struct {
+	ResponseSuccess
+	Data ProgramResponse `json:"data"`
+}
+
+type ProgramListResponseWrapper struct {
+	ResponseSuccess
+	Data interface{} `json:"data"` // Contains pagination data
+}
+
 type ErrorResponseWrapper struct {
 	Success bool        `json:"success" example:"false"`
 	Message string      `json:"message" example:"Error message"`

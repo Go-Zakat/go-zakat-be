@@ -128,7 +128,6 @@ definitions:
     - asnafID
     - name
     - phoneNumber
-    - status
     type: object
   dto.CreateMuzakkiRequest:
     properties:
@@ -144,6 +143,20 @@ definitions:
     - address
     - name
     - phoneNumber
+    type: object
+  dto.CreateProgramRequest:
+    properties:
+      active:
+        type: boolean
+      description:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+    required:
+    - name
+    - type
     type: object
   dto.ErrorResponseWrapper:
     properties:
@@ -254,6 +267,45 @@ definitions:
         example: true
         type: boolean
     type: object
+  dto.ProgramListResponseWrapper:
+    properties:
+      data:
+        description: Contains pagination data
+      message:
+        example: Success message
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  dto.ProgramResponse:
+    properties:
+      active:
+        type: boolean
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  dto.ProgramResponseWrapper:
+    properties:
+      data:
+        $ref: '#/definitions/dto.ProgramResponse'
+      message:
+        example: Success message
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
   dto.RefreshTokenRequest:
     properties:
       refresh_token:
@@ -332,6 +384,20 @@ definitions:
     - address
     - name
     - phoneNumber
+    type: object
+  dto.UpdateProgramRequest:
+    properties:
+      active:
+        type: boolean
+      description:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+    required:
+    - name
+    - type
     type: object
   dto.UserResponse:
     properties:
@@ -1043,6 +1109,176 @@ paths:
       summary: Update muzakki
       tags:
       - Muzakki
+  /api/v1/programs:
+    get:
+      description: Get list of programs with pagination, search, and filters
+      parameters:
+      - description: Search by name
+        in: query
+        name: q
+        type: string
+      - description: Filter by type
+        in: query
+        name: type
+        type: string
+      - description: Filter by active status
+        in: query
+        name: active
+        type: boolean
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ProgramListResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Get all programs
+      tags:
+      - Program
+    post:
+      consumes:
+      - application/json
+      description: Create a new program record
+      parameters:
+      - description: Create Program Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateProgramRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.ProgramResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Create new program
+      tags:
+      - Program
+  /api/v1/programs/{id}:
+    delete:
+      description: Delete a program record
+      parameters:
+      - description: Program ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ResponseSuccess'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Delete program
+      tags:
+      - Program
+    get:
+      description: Get a single program record by ID
+      parameters:
+      - description: Program ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ProgramResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Get program by ID
+      tags:
+      - Program
+    put:
+      consumes:
+      - application/json
+      description: Update an existing program record
+      parameters:
+      - description: Program ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update Program Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateProgramRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ProgramResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Update program
+      tags:
+      - Program
 securityDefinitions:
   BearerAuth:
     in: header

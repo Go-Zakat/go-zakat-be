@@ -99,6 +99,11 @@ func main() {
 	mustahiqUC := usecase.NewMustahiqUseCase(mustahiqRepo, val)
 	mustahiqHandler := handler.NewMustahiqHandler(mustahiqUC)
 
+	// Program dependencies
+	programRepo := postgres.NewProgramRepository(dbPool, logr)
+	programUC := usecase.NewProgramUseCase(programRepo, val)
+	programHandler := handler.NewProgramHandler(programUC)
+
 	// Middleware
 	authMiddleware := middleware.NewAuthMiddleware(tokenSvc)
 
@@ -170,6 +175,17 @@ func main() {
 			mustahiq.POST("", mustahiqHandler.Create)
 			mustahiq.PUT("/:id", mustahiqHandler.Update)
 			mustahiq.DELETE("/:id", mustahiqHandler.Delete)
+		}
+
+		// Program routes (protected)
+		programs := v1.Group("/programs")
+		programs.Use(authMiddleware.RequireAuth())
+		{
+			programs.GET("", programHandler.FindAll)
+			programs.GET("/:id", programHandler.FindByID)
+			programs.POST("", programHandler.Create)
+			programs.PUT("/:id", programHandler.Update)
+			programs.DELETE("/:id", programHandler.Delete)
 		}
 	}
 
