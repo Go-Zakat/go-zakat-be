@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"go-zakat/internal/domain/entity"
 	"go-zakat/internal/domain/repository"
@@ -114,15 +115,18 @@ func (r *DistributionRepository) FindAll(filter repository.DistributionFilter) (
 		d := &entity.Distribution{}
 		var programName string
 		var beneficiaryCount int64
+		var distributionDate time.Time
 
 		err := rows.Scan(
-			&d.ID, &d.DistributionDate, &d.ProgramID, &programName,
+			&d.ID, &distributionDate, &d.ProgramID, &programName,
 			&d.SourceFundType, &d.TotalAmount, &d.Notes, &beneficiaryCount,
 			&d.CreatedAt, &d.UpdatedAt,
 		)
 		if err != nil {
 			return nil, 0, err
 		}
+		// Convert time.Time to YYYY-MM-DD string
+		d.DistributionDate = distributionDate.Format("2006-01-02")
 
 		// Set program if exists
 		if d.ProgramID != nil && *d.ProgramID != "" {
@@ -159,14 +163,17 @@ func (r *DistributionRepository) FindByID(id string) (*entity.Distribution, erro
 	}
 
 	var programID, programName *string
+	var distributionDate time.Time
 	err := r.db.QueryRow(ctx, query, id).Scan(
-		&d.ID, &d.DistributionDate, &d.ProgramID, &programID, &programName,
+		&d.ID, &distributionDate, &d.ProgramID, &programID, &programName,
 		&d.SourceFundType, &d.TotalAmount, &d.Notes, &d.CreatedByUserID,
 		&d.CreatedByUser.ID, &d.CreatedByUser.Name, &d.CreatedAt, &d.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err
 	}
+	// Convert time.Time to YYYY-MM-DD string
+	d.DistributionDate = distributionDate.Format("2006-01-02")
 
 	// Set program if exists
 	if programID != nil && programName != nil {

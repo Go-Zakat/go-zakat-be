@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"go-zakat/internal/domain/entity"
 	"go-zakat/internal/domain/repository"
@@ -128,13 +129,16 @@ func (r *DonationReceiptRepository) FindAll(filter repository.DonationReceiptFil
 		dr := &entity.DonationReceipt{
 			Muzakki: &entity.Muzakki{},
 		}
+		var receiptDate time.Time
 		err := rows.Scan(
-			&dr.ID, &dr.ReceiptNumber, &dr.ReceiptDate, &dr.MuzakkiID, &dr.Muzakki.Name,
+			&dr.ID, &dr.ReceiptNumber, &receiptDate, &dr.MuzakkiID, &dr.Muzakki.Name,
 			&dr.PaymentMethod, &dr.TotalAmount, &dr.Notes, &dr.CreatedByUserID, &dr.CreatedAt, &dr.UpdatedAt,
 		)
 		if err != nil {
 			return nil, 0, err
 		}
+		// Convert time.Time to YYYY-MM-DD string
+		dr.ReceiptDate = receiptDate.Format("2006-01-02")
 		receipts = append(receipts, dr)
 	}
 
@@ -161,14 +165,17 @@ func (r *DonationReceiptRepository) FindByID(id string) (*entity.DonationReceipt
 		Muzakki:       &entity.Muzakki{},
 		CreatedByUser: &entity.User{},
 	}
+	var receiptDate time.Time
 	err := r.db.QueryRow(ctx, query, id).Scan(
-		&dr.ID, &dr.ReceiptNumber, &dr.ReceiptDate, &dr.MuzakkiID, &dr.Muzakki.ID, &dr.Muzakki.Name,
+		&dr.ID, &dr.ReceiptNumber, &receiptDate, &dr.MuzakkiID, &dr.Muzakki.ID, &dr.Muzakki.Name,
 		&dr.PaymentMethod, &dr.TotalAmount, &dr.Notes, &dr.CreatedByUserID,
 		&dr.CreatedByUser.ID, &dr.CreatedByUser.Name, &dr.CreatedAt, &dr.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err
 	}
+	// Convert time.Time to YYYY-MM-DD string
+	dr.ReceiptDate = receiptDate.Format("2006-01-02")
 
 	// Get items
 	itemsQuery := `
