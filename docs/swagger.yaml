@@ -105,6 +105,45 @@ definitions:
     required:
     - name
     type: object
+  dto.CreateDistributionItemRequest:
+    properties:
+      amount:
+        type: number
+      mustahiq_id:
+        type: string
+      notes:
+        type: string
+    required:
+    - amount
+    - mustahiq_id
+    type: object
+  dto.CreateDistributionRequest:
+    properties:
+      distribution_date:
+        description: YYYY-MM-DD
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/dto.CreateDistributionItemRequest'
+        minItems: 1
+        type: array
+      notes:
+        type: string
+      program_id:
+        description: optional
+        type: string
+      source_fund_type:
+        enum:
+        - zakat_fitrah
+        - zakat_maal
+        - infaq
+        - sadaqah
+        type: string
+    required:
+    - distribution_date
+    - items
+    - source_fund_type
+    type: object
   dto.CreateDonationReceiptItemRequest:
     properties:
       amount:
@@ -208,6 +247,70 @@ definitions:
     required:
     - name
     - type
+    type: object
+  dto.DistributionItemResponse:
+    properties:
+      address:
+        type: string
+      amount:
+        type: number
+      asnaf_name:
+        type: string
+      id:
+        type: string
+      mustahiq_id:
+        type: string
+      mustahiq_name:
+        type: string
+      notes:
+        type: string
+    type: object
+  dto.DistributionListResponseWrapper:
+    properties:
+      data:
+        description: Contains pagination data
+      message:
+        example: Success message
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  dto.DistributionResponse:
+    properties:
+      created_at:
+        type: string
+      created_by_user:
+        $ref: '#/definitions/dto.UserInfo'
+      distribution_date:
+        type: string
+      id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/dto.DistributionItemResponse'
+        type: array
+      notes:
+        type: string
+      program:
+        $ref: '#/definitions/dto.ProgramInfo'
+      source_fund_type:
+        type: string
+      total_amount:
+        type: number
+      updated_at:
+        type: string
+    type: object
+  dto.DistributionResponseWrapper:
+    properties:
+      data:
+        $ref: '#/definitions/dto.DistributionResponse'
+      message:
+        example: Success message
+        type: string
+      success:
+        example: true
+        type: boolean
     type: object
   dto.DonationReceiptItemResponse:
     properties:
@@ -391,6 +494,13 @@ definitions:
         example: true
         type: boolean
     type: object
+  dto.ProgramInfo:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
   dto.ProgramListResponseWrapper:
     properties:
       data:
@@ -468,6 +578,31 @@ definitions:
         type: string
     required:
     - name
+    type: object
+  dto.UpdateDistributionRequest:
+    properties:
+      distribution_date:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/dto.CreateDistributionItemRequest'
+        minItems: 1
+        type: array
+      notes:
+        type: string
+      program_id:
+        type: string
+      source_fund_type:
+        enum:
+        - zakat_fitrah
+        - zakat_maal
+        - infaq
+        - sadaqah
+        type: string
+    required:
+    - distribution_date
+    - items
+    - source_fund_type
     type: object
   dto.UpdateDonationReceiptRequest:
     properties:
@@ -932,6 +1067,185 @@ paths:
       summary: Register user baru
       tags:
       - Auth
+  /api/v1/distributions:
+    get:
+      description: Get list of distributions with pagination and filters
+      parameters:
+      - description: Filter by date from (YYYY-MM-DD)
+        in: query
+        name: date_from
+        type: string
+      - description: Filter by date to (YYYY-MM-DD)
+        in: query
+        name: date_to
+        type: string
+      - description: 'Filter by source fund type: zakat_fitrah, zakat_maal, infaq,
+          sadaqah'
+        in: query
+        name: source_fund_type
+        type: string
+      - description: Filter by program ID
+        in: query
+        name: program_id
+        type: string
+      - description: Search in program name or notes
+        in: query
+        name: q
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DistributionListResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Get all distributions
+      tags:
+      - Distributions
+    post:
+      consumes:
+      - application/json
+      description: Create a new distribution with items
+      parameters:
+      - description: Create Distribution Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateDistributionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.DistributionResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Create new distribution
+      tags:
+      - Distributions
+  /api/v1/distributions/{id}:
+    delete:
+      description: Delete a distribution
+      parameters:
+      - description: Distribution ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ResponseSuccess'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Delete distribution
+      tags:
+      - Distributions
+    get:
+      description: Get a single distribution with all items
+      parameters:
+      - description: Distribution ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DistributionResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Get distribution by ID
+      tags:
+      - Distributions
+    put:
+      consumes:
+      - application/json
+      description: Update an existing distribution
+      parameters:
+      - description: Distribution ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update Distribution Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateDistributionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DistributionResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Update distribution
+      tags:
+      - Distributions
   /api/v1/donation-receipts:
     get:
       description: Get list of donation receipts with pagination and filters

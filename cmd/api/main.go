@@ -109,6 +109,11 @@ func main() {
 	donationReceiptUC := usecase.NewDonationReceiptUseCase(donationReceiptRepo, muzakkiRepo, val)
 	donationReceiptHandler := handler.NewDonationReceiptHandler(donationReceiptUC)
 
+	// Distribution dependencies
+	distributionRepo := postgres.NewDistributionRepository(dbPool, logr)
+	distributionUC := usecase.NewDistributionUseCase(distributionRepo, mustahiqRepo, val)
+	distributionHandler := handler.NewDistributionHandler(distributionUC)
+
 	// Middleware
 	authMiddleware := middleware.NewAuthMiddleware(tokenSvc)
 
@@ -202,6 +207,17 @@ func main() {
 			donationReceipts.POST("", donationReceiptHandler.Create)
 			donationReceipts.PUT("/:id", donationReceiptHandler.Update)
 			donationReceipts.DELETE("/:id", donationReceiptHandler.Delete)
+		}
+
+		// Distribution routes (protected)
+		distributions := v1.Group("/distributions")
+		distributions.Use(authMiddleware.RequireAuth())
+		{
+			distributions.GET("", distributionHandler.FindAll)
+			distributions.GET("/:id", distributionHandler.FindByID)
+			distributions.POST("", distributionHandler.Create)
+			distributions.PUT("/:id", distributionHandler.Update)
+			distributions.DELETE("/:id", distributionHandler.Delete)
 		}
 	}
 

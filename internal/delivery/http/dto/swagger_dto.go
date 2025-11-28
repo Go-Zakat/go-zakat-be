@@ -75,6 +75,16 @@ type DonationReceiptListResponseWrapper struct {
 	Data interface{} `json:"data"` // Contains pagination data
 }
 
+type DistributionResponseWrapper struct {
+	ResponseSuccess
+	Data DistributionResponse `json:"data"`
+}
+
+type DistributionListResponseWrapper struct {
+	ResponseSuccess
+	Data interface{} `json:"data"` // Contains pagination data
+}
+
 type ErrorResponseWrapper struct {
 	Success bool        `json:"success" example:"false"`
 	Message string      `json:"message" example:"Error message"`
