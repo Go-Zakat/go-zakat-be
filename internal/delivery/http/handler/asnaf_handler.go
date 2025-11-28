@@ -97,11 +97,13 @@ func (h *AsnafHandler) FindAll(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, "Get all asnaf successful", gin.H{
-		"data":       data,
-		"total":      total,
-		"page":       page,
-		"per_page":   perPage,
-		"total_page": (total + int64(perPage) - 1) / int64(perPage),
+		"items": data,
+		"meta": gin.H{
+			"page":       page,
+			"per_page":   perPage,
+			"total":      total,
+			"total_page": (total + int64(perPage) - 1) / int64(perPage),
+		},
 	})
 }
 
