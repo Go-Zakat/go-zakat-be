@@ -104,6 +104,11 @@ func main() {
 	programUC := usecase.NewProgramUseCase(programRepo, val)
 	programHandler := handler.NewProgramHandler(programUC)
 
+	// DonationReceipt dependencies
+	donationReceiptRepo := postgres.NewDonationReceiptRepository(dbPool, logr)
+	donationReceiptUC := usecase.NewDonationReceiptUseCase(donationReceiptRepo, muzakkiRepo, val)
+	donationReceiptHandler := handler.NewDonationReceiptHandler(donationReceiptUC)
+
 	// Middleware
 	authMiddleware := middleware.NewAuthMiddleware(tokenSvc)
 
@@ -186,6 +191,17 @@ func main() {
 			programs.POST("", programHandler.Create)
 			programs.PUT("/:id", programHandler.Update)
 			programs.DELETE("/:id", programHandler.Delete)
+		}
+
+		// DonationReceipt routes (protected)
+		donationReceipts := v1.Group("/donation-receipts")
+		donationReceipts.Use(authMiddleware.RequireAuth())
+		{
+			donationReceipts.GET("", donationReceiptHandler.FindAll)
+			donationReceipts.GET("/:id", donationReceiptHandler.FindByID)
+			donationReceipts.POST("", donationReceiptHandler.Create)
+			donationReceipts.PUT("/:id", donationReceiptHandler.Update)
+			donationReceipts.DELETE("/:id", donationReceiptHandler.Delete)
 		}
 	}
 

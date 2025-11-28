@@ -105,6 +105,57 @@ definitions:
     required:
     - name
     type: object
+  dto.CreateDonationReceiptItemRequest:
+    properties:
+      amount:
+        type: number
+      fund_type:
+        enum:
+        - zakat
+        - infaq
+        - sadaqah
+        type: string
+      notes:
+        type: string
+      person_count:
+        minimum: 1
+        type: integer
+      rice_kg:
+        type: number
+      zakat_type:
+        enum:
+        - fitrah
+        - maal
+        type: string
+    required:
+    - amount
+    - fund_type
+    type: object
+  dto.CreateDonationReceiptRequest:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.CreateDonationReceiptItemRequest'
+        minItems: 1
+        type: array
+      muzakki_id:
+        type: string
+      notes:
+        type: string
+      payment_method:
+        type: string
+      receipt_date:
+        description: YYYY-MM-DD
+        type: string
+      receipt_number:
+        type: string
+    required:
+    - items
+    - muzakki_id
+    - payment_method
+    - receipt_date
+    - receipt_number
+    type: object
   dto.CreateMustahiqRequest:
     properties:
       address:
@@ -157,6 +208,72 @@ definitions:
     required:
     - name
     - type
+    type: object
+  dto.DonationReceiptItemResponse:
+    properties:
+      amount:
+        type: number
+      fund_type:
+        type: string
+      id:
+        type: string
+      notes:
+        type: string
+      person_count:
+        type: integer
+      rice_kg:
+        type: number
+      zakat_type:
+        type: string
+    type: object
+  dto.DonationReceiptListResponseWrapper:
+    properties:
+      data:
+        description: Contains pagination data
+      message:
+        example: Success message
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  dto.DonationReceiptResponse:
+    properties:
+      created_at:
+        type: string
+      created_by_user:
+        $ref: '#/definitions/dto.UserInfo'
+      id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/dto.DonationReceiptItemResponse'
+        type: array
+      muzakki:
+        $ref: '#/definitions/dto.MuzakkiInfo'
+      notes:
+        type: string
+      payment_method:
+        type: string
+      receipt_date:
+        type: string
+      receipt_number:
+        type: string
+      total_amount:
+        type: number
+      updated_at:
+        type: string
+    type: object
+  dto.DonationReceiptResponseWrapper:
+    properties:
+      data:
+        $ref: '#/definitions/dto.DonationReceiptResponse'
+      message:
+        example: Success message
+        type: string
+      success:
+        example: true
+        type: boolean
     type: object
   dto.ErrorResponseWrapper:
     properties:
@@ -227,6 +344,13 @@ definitions:
       success:
         example: true
         type: boolean
+    type: object
+  dto.MuzakkiInfo:
+    properties:
+      full_name:
+        type: string
+      id:
+        type: string
     type: object
   dto.MuzakkiListResponseWrapper:
     properties:
@@ -345,6 +469,30 @@ definitions:
     required:
     - name
     type: object
+  dto.UpdateDonationReceiptRequest:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.CreateDonationReceiptItemRequest'
+        minItems: 1
+        type: array
+      muzakki_id:
+        type: string
+      notes:
+        type: string
+      payment_method:
+        type: string
+      receipt_date:
+        type: string
+      receipt_number:
+        type: string
+    required:
+    - items
+    - muzakki_id
+    - payment_method
+    - receipt_date
+    - receipt_number
+    type: object
   dto.UpdateMustahiqRequest:
     properties:
       address:
@@ -398,6 +546,13 @@ definitions:
     required:
     - name
     - type
+    type: object
+  dto.UserInfo:
+    properties:
+      full_name:
+        type: string
+      id:
+        type: string
     type: object
   dto.UserResponse:
     properties:
@@ -777,6 +932,192 @@ paths:
       summary: Register user baru
       tags:
       - Auth
+  /api/v1/donation-receipts:
+    get:
+      description: Get list of donation receipts with pagination and filters
+      parameters:
+      - description: Filter by date from (YYYY-MM-DD)
+        in: query
+        name: date_from
+        type: string
+      - description: Filter by date to (YYYY-MM-DD)
+        in: query
+        name: date_to
+        type: string
+      - description: 'Filter by fund type: zakat, infaq, sadaqah'
+        in: query
+        name: fund_type
+        type: string
+      - description: 'Filter by zakat type: fitrah, maal'
+        in: query
+        name: zakat_type
+        type: string
+      - description: Filter by payment method
+        in: query
+        name: payment_method
+        type: string
+      - description: Filter by muzakki ID
+        in: query
+        name: muzakki_id
+        type: string
+      - description: Search in muzakki name or notes
+        in: query
+        name: q
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DonationReceiptListResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Get all donation receipts
+      tags:
+      - Donation Receipts
+    post:
+      consumes:
+      - application/json
+      description: Create a new donation receipt with items
+      parameters:
+      - description: Create Donation Receipt Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateDonationReceiptRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.DonationReceiptResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Create new donation receipt
+      tags:
+      - Donation Receipts
+  /api/v1/donation-receipts/{id}:
+    delete:
+      description: Delete a donation receipt
+      parameters:
+      - description: Donation Receipt ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ResponseSuccess'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Delete donation receipt
+      tags:
+      - Donation Receipts
+    get:
+      description: Get a single donation receipt with all items
+      parameters:
+      - description: Donation Receipt ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DonationReceiptResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Get donation receipt by ID
+      tags:
+      - Donation Receipts
+    put:
+      consumes:
+      - application/json
+      description: Update an existing donation receipt
+      parameters:
+      - description: Donation Receipt ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update Donation Receipt Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateDonationReceiptRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DonationReceiptResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Update donation receipt
+      tags:
+      - Donation Receipts
   /api/v1/mustahiq:
     get:
       description: Get list of mustahiq with pagination, search, and status filter
