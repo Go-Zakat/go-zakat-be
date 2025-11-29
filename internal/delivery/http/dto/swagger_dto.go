@@ -20,6 +20,14 @@ type UserResponseWrapper struct {
 	Data UserResponse `json:"data"`
 }
 
+type UserListResponseWrapper struct {
+	ResponseSuccess
+	Data struct {
+		Items []UserResponse `json:"items"`
+		Meta  MetaResponse   `json:"meta"`
+	} `json:"data"`
+}
+
 type AuthURLResponseWrapper struct {
 	ResponseSuccess
 	Data AuthURLResponse `json:"data"`

@@ -23,6 +23,7 @@ type TokenService struct {
 // CustomClaims adalah payload tambahan dalam JWT kita
 type CustomClaims struct {
 	UserID string `json:"user_id"` // ID user yang terkait token
+	Role   string `json:"role"`    // Role user (admin, staf, viewer)
 	jwt.RegisteredClaims
 }
 
@@ -32,11 +33,12 @@ func NewTokenService(cfg TokenConfig) *TokenService {
 }
 
 // GenerateAccessToken membuat JWT access token dengan expired pendek (mis: 15 menit)
-func (s *TokenService) GenerateAccessToken(userID string) (string, error) {
+func (s *TokenService) GenerateAccessToken(userID, role string) (string, error) {
 	now := time.Now()
 
 	claims := &CustomClaims{
 		UserID: userID,
+		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(s.cfg.AccessTokenTTL)),
@@ -51,11 +53,12 @@ func (s *TokenService) GenerateAccessToken(userID string) (string, error) {
 }
 
 // GenerateRefreshToken membuat token dengan masa berlaku lebih lama (mis: 7 hari)
-func (s *TokenService) GenerateRefreshToken(userID string) (string, error) {
+func (s *TokenService) GenerateRefreshToken(userID, role string) (string, error) {
 	now := time.Now()
 
 	claims := &CustomClaims{
 		UserID: userID,
+		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(s.cfg.RefreshTokenTTL)),
@@ -67,7 +70,7 @@ func (s *TokenService) GenerateRefreshToken(userID string) (string, error) {
 }
 
 // ValidateToken general, dipakai oleh ValidateAccessToken & ValidateRefreshToken
-func (s *TokenService) ValidateToken(tokenStr string, secret string) (string, error) {
+func (s *TokenService) ValidateToken(tokenStr string, secret string) (string, string, error) {
 	// Parse dan validasi token
 	token, err := jwt.ParseWithClaims(tokenStr, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		// Pastikan algorithm-nya HS256 (atau yang kita harapkan)
@@ -77,21 +80,21 @@ func (s *TokenService) ValidateToken(tokenStr string, secret string) (string, er
 		return []byte(secret), nil
 	})
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	claims, ok := token.Claims.(*CustomClaims)
 	if !ok || !token.Valid {
-		return "", errors.New("token tidak valid")
+		return "", "", errors.New("token tidak valid")
 	}
 
-	return claims.UserID, nil
+	return claims.UserID, claims.Role, nil
 }
 
-func (s *TokenService) ValidateAccessToken(token string) (string, error) {
+func (s *TokenService) ValidateAccessToken(token string) (string, string, error) {
 	return s.ValidateToken(token, s.cfg.AccessSecret)
 }
 
-func (s *TokenService) ValidateRefreshToken(token string) (string, error) {
+func (s *TokenService) ValidateRefreshToken(token string) (string, string, error) {
 	return s.ValidateToken(token, s.cfg.RefreshSecret)
 }

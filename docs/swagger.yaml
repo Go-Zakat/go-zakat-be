@@ -405,6 +405,17 @@ definitions:
     - email
     - password
     type: object
+  dto.MetaResponse:
+    properties:
+      page:
+        type: integer
+      per_page:
+        type: integer
+      total:
+        type: integer
+      total_page:
+        type: integer
+    type: object
   dto.MustahiqListResponseWrapper:
     properties:
       data:
@@ -693,6 +704,17 @@ definitions:
     - name
     - type
     type: object
+  dto.UpdateRoleRequest:
+    properties:
+      role:
+        enum:
+        - admin
+        - staf
+        - viewer
+        type: string
+    required:
+    - role
+    type: object
   dto.UserInfo:
     properties:
       full_name:
@@ -700,15 +722,39 @@ definitions:
       id:
         type: string
     type: object
+  dto.UserListResponseWrapper:
+    properties:
+      data:
+        properties:
+          items:
+            items:
+              $ref: '#/definitions/dto.UserResponse'
+            type: array
+          meta:
+            $ref: '#/definitions/dto.MetaResponse'
+        type: object
+      message:
+        example: Success message
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
   dto.UserResponse:
     properties:
+      created_at:
+        type: string
       email:
+        type: string
+      google_id:
         type: string
       id:
         type: string
       name:
         type: string
       role:
+        type: string
+      updated_at:
         type: string
     type: object
   dto.UserResponseWrapper:
@@ -2085,6 +2131,134 @@ paths:
       summary: Get mustahiq history report
       tags:
       - Reports
+  /api/v1/users:
+    get:
+      description: Get all users with pagination and search (Admin only)
+      parameters:
+      - description: Search by name or email
+        in: query
+        name: q
+        type: string
+      - description: Filter by role (admin, staf, viewer)
+        in: query
+        name: role
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserListResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Get all users
+      tags:
+      - Users
+  /api/v1/users/{id}:
+    get:
+      description: Get user details by ID (Admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Get user by ID
+      tags:
+      - Users
+  /api/v1/users/{id}/role:
+    put:
+      consumes:
+      - application/json
+      description: Update user role (Admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Role update request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponseWrapper'
+      security:
+      - BearerAuth: []
+      summary: Update user role
+      tags:
+      - Users
 securityDefinitions:
   BearerAuth:
     in: header

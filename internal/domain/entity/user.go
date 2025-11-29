@@ -4,7 +4,7 @@ import "time"
 
 const (
 	RoleAdmin  = "admin"
-	RoleStaff  = "staff"
+	RoleStaf   = "staf"
 	RoleViewer = "viewer"
 )
 

@@ -87,11 +87,11 @@ func (uc *AuthUseCase) Register(input RegisterInput) (*AuthTokens, *entity.User,
 	}
 
 	// 6. Generate access token & refresh token
-	access, err := uc.tokenSvc.GenerateAccessToken(user.ID)
+	access, err := uc.tokenSvc.GenerateAccessToken(user.ID, user.Role)
 	if err != nil {
 		return nil, nil, err
 	}
-	refresh, err := uc.tokenSvc.GenerateRefreshToken(user.ID)
+	refresh, err := uc.tokenSvc.GenerateRefreshToken(user.ID, user.Role)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -118,11 +118,11 @@ func (uc *AuthUseCase) Login(input LoginInput) (*AuthTokens, *entity.User, error
 		return nil, nil, errors.New("email atau password salah")
 	}
 
-	access, err := uc.tokenSvc.GenerateAccessToken(user.ID)
+	access, err := uc.tokenSvc.GenerateAccessToken(user.ID, user.Role)
 	if err != nil {
 		return nil, nil, err
 	}
-	refresh, err := uc.tokenSvc.GenerateRefreshToken(user.ID)
+	refresh, err := uc.tokenSvc.GenerateRefreshToken(user.ID, user.Role)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -175,11 +175,11 @@ func (uc *AuthUseCase) GoogleCallback(state, expectedState, code string) (*AuthT
 	}
 
 	// 5. Generate token
-	access, err := uc.tokenSvc.GenerateAccessToken(user.ID)
+	access, err := uc.tokenSvc.GenerateAccessToken(user.ID, user.Role)
 	if err != nil {
 		return nil, nil, err
 	}
-	refresh, err := uc.tokenSvc.GenerateRefreshToken(user.ID)
+	refresh, err := uc.tokenSvc.GenerateRefreshToken(user.ID, user.Role)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -192,12 +192,19 @@ func (uc *AuthUseCase) GoogleCallback(state, expectedState, code string) (*AuthT
 
 // RefreshToken : validasi refresh token → buat access token baru
 func (uc *AuthUseCase) RefreshToken(refreshToken string) (*AuthTokens, error) {
-	userID, err := uc.tokenSvc.ValidateRefreshToken(refreshToken)
+	userID, _, err := uc.tokenSvc.ValidateRefreshToken(refreshToken)
 	if err != nil {
 		return nil, errors.New("refresh token tidak valid")
 	}
 
-	access, err := uc.tokenSvc.GenerateAccessToken(userID)
+	// Ambil data user terbaru dari DB untuk memastikan role update
+	user, err := uc.userRepo.FindByID(userID)
+	if err != nil {
+		return nil, errors.New("user tidak ditemukan")
+	}
+
+	// Generate access token dengan role terbaru dari DB
+	access, err := uc.tokenSvc.GenerateAccessToken(user.ID, user.Role)
 	if err != nil {
 		return nil, err
 	}
@@ -238,12 +245,12 @@ func (uc *AuthUseCase) GoogleMobileLogin(idToken string) (*AuthTokens, *entity.U
 		user = newUser
 	}
 
-	access, err := uc.tokenSvc.GenerateAccessToken(user.ID)
+	access, err := uc.tokenSvc.GenerateAccessToken(user.ID, user.Role)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	refresh, err := uc.tokenSvc.GenerateRefreshToken(user.ID)
+	refresh, err := uc.tokenSvc.GenerateRefreshToken(user.ID, user.Role)
 	if err != nil {
 		return nil, nil, err
 	}

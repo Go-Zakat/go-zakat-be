@@ -3,9 +3,11 @@ package postgres
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"go-zakat/internal/domain/entity"
+	"go-zakat/internal/domain/repository"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sirupsen/logrus"
@@ -168,6 +170,111 @@ func (r *UserRepository) Update(user *entity.User) error {
 	if ct.RowsAffected() == 0 {
 		return errors.New("user not found")
 	}
+
+	return nil
+}
+
+func (r *UserRepository) FindAll(filter repository.UserFilter) ([]*entity.User, int64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	// Base query
+	query := `
+		SELECT id, email, google_id, name, role, created_at, updated_at
+		FROM users
+		WHERE 1=1
+	`
+
+	countQuery := `
+		SELECT COUNT(*)
+		FROM users
+		WHERE 1=1
+	`
+
+	var args []interface{}
+	argIdx := 1
+	var conditions string
+
+	// Search filter
+	if filter.Query != "" {
+		search := "%" + filter.Query + "%"
+		conditions += fmt.Sprintf(" AND (name ILIKE $%d OR email ILIKE $%d)", argIdx, argIdx+1)
+		args = append(args, search, search)
+		argIdx += 2
+	}
+
+	// Role filter
+	if filter.Role != "" {
+		conditions += fmt.Sprintf(" AND role = $%d", argIdx)
+		args = append(args, filter.Role)
+		argIdx++
+	}
+
+	// Add conditions to queries
+	query += conditions
+	countQuery += conditions
+
+	// Get total count
+	var total int64
+	err := r.db.QueryRow(ctx, countQuery, args...).Scan(&total)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Add pagination
+	query += " ORDER BY created_at DESC"
+	if filter.PerPage > 0 {
+		offset := (filter.Page - 1) * filter.PerPage
+		query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argIdx, argIdx+1)
+		args = append(args, filter.PerPage, offset)
+	}
+
+	// Execute query
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var users []*entity.User
+	for rows.Next() {
+		user := &entity.User{}
+		var googleID *string
+		err := rows.Scan(&user.ID, &user.Email, &googleID, &user.Name, &user.Role, &user.CreatedAt, &user.UpdatedAt)
+		if err != nil {
+			return nil, 0, err
+		}
+		user.GoogleID = googleID
+		// Don't include password in list
+		users = append(users, user)
+	}
+
+	return users, total, nil
+}
+
+func (r *UserRepository) UpdateRole(userID, role string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	query := `
+		UPDATE users
+		SET role = $1, updated_at = NOW()
+		WHERE id = $2
+	`
+
+	ct, err := r.db.Exec(ctx, query, role, userID)
+	if err != nil {
+		return err
+	}
+
+	if ct.RowsAffected() == 0 {
+		return errors.New("user not found")
+	}
+
+	r.log.WithFields(logrus.Fields{
+		"user_id": userID,
+		"role":    role,
+	}).Info("user role updated")
 
 	return nil
 }

@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"errors"
+	"time"
 
 	"go-zakat/internal/domain/repository"
 
@@ -248,7 +249,7 @@ func (r *ReportRepository) GetFundBalance(dateFrom, dateTo string) ([]repository
 	}
 
 	query += `
-			GROUP BY fund_type
+			GROUP BY dri.fund_type, dri.zakat_type
 		),
 		outgoing AS (
 			SELECT 
@@ -354,10 +355,13 @@ func (r *ReportRepository) GetMustahiqHistory(mustahiqID string) (*repository.Mu
 
 	for rows.Next() {
 		var item repository.MustahiqHistoryItem
-		err := rows.Scan(&item.DistributionDate, &item.ProgramName, &item.SourceFundType, &item.Amount)
+		var distributionDate time.Time
+		err := rows.Scan(&distributionDate, &item.ProgramName, &item.SourceFundType, &item.Amount)
 		if err != nil {
 			return nil, err
 		}
+		// Convert time.Time to YYYY-MM-DD string
+		item.DistributionDate = distributionDate.Format("2006-01-02")
 		history = append(history, item)
 		totalReceived += item.Amount
 	}

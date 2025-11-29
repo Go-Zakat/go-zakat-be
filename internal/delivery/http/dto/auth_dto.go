@@ -35,14 +35,22 @@ type AuthURLResponse struct {
 }
 
 type UserResponse struct {
-	ID    string `json:"id"`
-	Email string `json:"email"`
-	Name  string `json:"name"`
-	Role  string `json:"role"`
+	ID        string  `json:"id"`
+	Email     string  `json:"email"`
+	Name      string  `json:"name"`
+	Role      string  `json:"role"`
+	GoogleID  *string `json:"google_id,omitempty"`
+	CreatedAt string  `json:"created_at,omitempty"`
+	UpdatedAt string  `json:"updated_at,omitempty"`
 }
 
 type AuthResponse struct {
 	User         UserResponse `json:"user"`
 	AccessToken  string       `json:"access_token"`
 	RefreshToken string       `json:"refresh_token"`
+}
+
+// UpdateRoleRequest for updating user role
+type UpdateRoleRequest struct {
+	Role string `json:"role" validate:"required,oneof=admin staf viewer"`
 }

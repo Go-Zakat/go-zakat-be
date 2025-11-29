@@ -8,8 +8,8 @@ type GoogleOAuthService interface {
 }
 
 type TokenService interface {
-	GenerateAccessToken(userID string) (string, error)
-	GenerateRefreshToken(userID string) (string, error)
-	ValidateAccessToken(token string) (userID string, err error)
-	ValidateRefreshToken(token string) (userID string, err error)
+	GenerateAccessToken(userID, role string) (string, error)
+	GenerateRefreshToken(userID, role string) (string, error)
+	ValidateAccessToken(token string) (userID, role string, err error)
+	ValidateRefreshToken(token string) (userID, role string, err error)
 }
