@@ -50,6 +50,11 @@ func main() {
 	docs.SwaggerInfo.Version = "1.0"
 	docs.SwaggerInfo.Host = "localhost:" + cfg.AppPort
 
+	// Run Migrations
+	if err := database.RunMigrations(cfg.DatabaseURL); err != nil {
+		logr.Fatalf("gagal run migrations: %v", err)
+	}
+
 	// Database
 	dbPool, err := database.NewPostgresPool(cfg.DatabaseURL)
 	if err != nil {

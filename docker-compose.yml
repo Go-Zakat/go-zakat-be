@@ -1,0 +1,45 @@
+
+services:
+  app:
+    build: .
+    container_name: go_zakat_api
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-go_zakat_db}?sslmode=disable
+      - APP_PORT=8080
+      # Pass other env vars from .env file
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URL=${GOOGLE_REDIRECT_URL}
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - zakat-network
+
+  db:
+    image: postgres:15-alpine
+    container_name: go_zakat_db
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-go_zakat_db}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - zakat-network
+
+volumes:
+  postgres_data:
+
+networks:
+  zakat-network:
+    driver: bridge

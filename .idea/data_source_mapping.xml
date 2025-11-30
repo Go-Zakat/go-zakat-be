@@ -26,6 +26,7 @@
     <file url="file://$PROJECT_DIR$/migrations/000008_create_distributions_table.up.sql" value="eb03ca50-0194-469b-be83-2d662fb7c37e" />
     <file url="file://$PROJECT_DIR$/migrations/000009_create_distribution_items_table.down.sql" value="eb03ca50-0194-469b-be83-2d662fb7c37e" />
     <file url="file://$PROJECT_DIR$/migrations/000009_create_distribution_items_table.up.sql" value="eb03ca50-0194-469b-be83-2d662fb7c37e" />
+    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/e49c0178-83f1-47dc-900d-03bc4f4faa1a/console.sql" value="e49c0178-83f1-47dc-900d-03bc4f4faa1a" />
     <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/eb03ca50-0194-469b-be83-2d662fb7c37e/console.sql" value="eb03ca50-0194-469b-be83-2d662fb7c37e" />
     <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/eb03ca50-0194-469b-be83-2d662fb7c37e/console_1.sql" value="eb03ca50-0194-469b-be83-2d662fb7c37e" />
   </component>
