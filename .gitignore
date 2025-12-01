@@ -1,0 +1,39 @@
+# Ignore environment files
+.env
+.env.*
+
+# Go build / dependency directories
+/bin/
+/pkg/
+/vendor/
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+
+# Output files
+*.out
+*.log
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+/docker-compose.override.yml
+/pgdata/
+
+# Misc
+coverage.out
+node_modules/
+dist/
+build/
