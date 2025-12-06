@@ -125,7 +125,7 @@ RESTful API untuk sistem manajemen Zakat, Infaq, dan Sadaqah (ZIS) yang dibangun
 
 1. **Clone repository**
    ```bash
-   git clone <repository-url>
+   git clone <https://github.com/Go-Zakat/go-zakat-be.git>
    cd go-zakat
    ```
 

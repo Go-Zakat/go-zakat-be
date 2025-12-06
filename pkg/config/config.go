@@ -50,8 +50,8 @@ func Load() *AppConfig {
 	}
 
 	// ambil TTL dari env
-	cfg.JWTAccessTTL = parseTTL(getEnv("JWT_ACCESS_TTL", "15m"))    // default 15m
-	cfg.JWTRefreshTTL = parseTTL(getEnv("JWT_REFRESH_TTL", "168h")) // default 7d
+	cfg.JWTAccessTTL = parseTTL(getEnv("JWT_ACCESS_EXP_MINUTES", "15m"))
+	cfg.JWTRefreshTTL = parseTTL(getEnv("JWT_REFRESH_EXP_DAYS", "168h"))
 
 	return cfg
 }
