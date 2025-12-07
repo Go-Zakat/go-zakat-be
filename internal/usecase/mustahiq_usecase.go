@@ -62,7 +62,13 @@ func (uc *MustahiqUseCase) Create(input CreateMustahiqInput) (*entity.Mustahiq, 
 		return nil, err
 	}
 
-	return mustahiq, nil
+	// Fetch the created mustahiq to get the asnaf details
+	createdMustahiq, err := uc.mustahiqRepo.FindByID(mustahiq.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return createdMustahiq, nil
 }
 
 func (uc *MustahiqUseCase) FindAll(filter repository.MustahiqFilter) ([]*entity.Mustahiq, int64, error) {
