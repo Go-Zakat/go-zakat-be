@@ -61,8 +61,8 @@ type DonationReceiptResponse struct {
 	Notes         string                        `json:"notes"`
 	CreatedByUser UserInfo                      `json:"created_by_user"`
 	Items         []DonationReceiptItemResponse `json:"items"`
-	CreatedAt     time.Time                     `json:"created_at"`
-	UpdatedAt     time.Time                     `json:"updated_at"`
+	CreatedAt     time.Time                     `json:"createdAt"`
+	UpdatedAt     time.Time                     `json:"updatedAt"`
 }
 
 // List item response (simplified)
@@ -76,6 +76,6 @@ type DonationReceiptListItemResponse struct {
 	TotalAmount     float64   `json:"total_amount"`
 	Notes           string    `json:"notes"`
 	CreatedByUserID string    `json:"created_by_user_id"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
+	CreatedAt       time.Time `json:"createdAt"`
+	UpdatedAt       time.Time `json:"updatedAt"`
 }

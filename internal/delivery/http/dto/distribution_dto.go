@@ -50,8 +50,8 @@ type DistributionResponse struct {
 	Notes            string                     `json:"notes"`
 	CreatedByUser    UserInfo                   `json:"created_by_user"`
 	Items            []DistributionItemResponse `json:"items"`
-	CreatedAt        time.Time                  `json:"created_at"`
-	UpdatedAt        time.Time                  `json:"updated_at"`
+	CreatedAt        time.Time                  `json:"createdAt"`
+	UpdatedAt        time.Time                  `json:"updatedAt"`
 }
 
 // List item response (simplified with beneficiary_count)
@@ -64,6 +64,6 @@ type DistributionListItemResponse struct {
 	TotalAmount      float64   `json:"total_amount"`
 	BeneficiaryCount int64     `json:"beneficiary_count"`
 	Notes            string    `json:"notes"`
-	CreatedAt        time.Time `json:"created_at"`
-	UpdatedAt        time.Time `json:"updated_at"`
+	CreatedAt        time.Time `json:"createdAt"`
+	UpdatedAt        time.Time `json:"updatedAt"`
 }
